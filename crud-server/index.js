@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json())
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.xmq0nwv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -41,6 +41,39 @@ async function run() {
             res.send(products);
         })
 
+        // READ to access each data
+        app.get('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const product = await productsCollection.findOne(query);
+            res.send(product);
+        })
+
+        // DELETE : 
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await productsCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // UPDATE::
+        app.put('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedproduct = req.body;
+            const query = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    productName: updatedproduct.productName,
+                    category: updatedproduct.category,
+                    price: updatedproduct.price
+                }
+            };
+            const result = await productsCollection.updateOne(query, updatedDoc, options);
+            res.send(result);
+
+        })
 
     } finally {
         // Ensures that the client will close when you finish/error
